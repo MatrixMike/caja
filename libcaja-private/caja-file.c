@@ -2396,7 +2396,7 @@ update_info_internal (CajaFile *file,
 	}
 	file->details->size_on_disk = size_on_disk;
 
-	sort_order = g_file_info_get_sort_order (info);
+	sort_order = g_file_info_get_attribute_int32 (info, G_FILE_ATTRIBUTE_STANDARD_SORT_ORDER);
 	if (file->details->sort_order != sort_order) {
 		changed = TRUE;
 	}
@@ -2451,7 +2451,8 @@ update_info_internal (CajaFile *file,
 		file->details->thumbnailing_failed = (thumbnailing_failed != FALSE);
 	}
 
-	symlink_name = g_file_info_get_symlink_target (info);
+	symlink_name = g_file_info_get_attribute_byte_string (info, G_FILE_ATTRIBUTE_STANDARD_SYMLINK_TARGET);
+
 	if (eel_strcmp (file->details->symlink_name, symlink_name) != 0) {
 		changed = TRUE;
 		g_free (file->details->symlink_name);
@@ -4848,7 +4849,7 @@ caja_file_fit_date_as_string (CajaFile *file,
 	char *date_string;
 	gchar *result = NULL;
 	int i;
-	GDateTime *date_time, *today;
+	GDateTime *date_time, *today, *end_of_today;
 	GTimeSpan file_date_age;
 
 	if (!caja_file_get_date (file, date_type, &file_time_raw)) {
@@ -4866,8 +4867,14 @@ caja_file_fit_date_as_string (CajaFile *file,
 	}
 
 	today = g_date_time_new_now_local ();
-	file_date_age = g_date_time_difference (today, date_time);
+	end_of_today = g_date_time_add_full (today, 0, 0, 1,
+					     -1 * g_date_time_get_hour (today),
+					     -1 * g_date_time_get_minute (today),
+					     -1.0 * g_date_time_get_seconds (today));
 	g_date_time_unref (today);
+
+	file_date_age = g_date_time_difference (end_of_today, date_time);
+	g_date_time_unref (end_of_today);
 
 	/* Format varies depending on how old the date is. This minimizes
 	 * the length (and thus clutter & complication) of typical dates
@@ -4877,12 +4884,12 @@ caja_file_fit_date_as_string (CajaFile *file,
 	 * internationalization's sake.
 	 */
 
-	if (file_date_age < G_TIME_SPAN_DAY) {
-		formats = TODAY_TIME_FORMATS;
-	} else if (file_date_age < 2 * G_TIME_SPAN_DAY) {
+	if (file_date_age <= 0 || file_date_age > 2 * G_TIME_SPAN_DAY) {
+		formats = CURRENT_WEEK_TIME_FORMATS;
+	} else if (file_date_age > G_TIME_SPAN_DAY) {
 		formats = YESTERDAY_TIME_FORMATS;
 	} else {
-		formats = CURRENT_WEEK_TIME_FORMATS;
+		formats = TODAY_TIME_FORMATS;
 	}
 
 	/* Find the date format that just fits the required width. Instead of measuring

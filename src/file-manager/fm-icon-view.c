@@ -80,8 +80,6 @@ typedef struct
     const CajaFileSortType sort_type;
     const char *metadata_text;
     const char *action;
-    const char *menu_label;
-    const char *menu_hint;
 } SortCriterion;
 
 typedef enum
@@ -125,65 +123,47 @@ static const SortCriterion sort_criteria[] =
     {
         CAJA_FILE_SORT_BY_DISPLAY_NAME,
         "name",
-        "Sort by Name",
-        N_("by _Name"),
-        N_("Keep icons sorted by name in rows")
+        "Sort by Name"
     },
     {
         CAJA_FILE_SORT_BY_SIZE,
         "size",
-        "Sort by Size",
-        N_("by _Size"),
-        N_("Keep icons sorted by size in rows")
+        "Sort by Size"
     },
     {
         CAJA_FILE_SORT_BY_SIZE_ON_DISK,
         "size_on_disk",
-        "Sort by Size on Disk",
-        N_("by S_ize on Disk"),
-        N_("Keep icons sorted by disk usage in rows")
+        "Sort by Size on Disk"
     },
     {
         CAJA_FILE_SORT_BY_TYPE,
         "type",
-        "Sort by Type",
-        N_("by _Type"),
-        N_("Keep icons sorted by type in rows")
+        "Sort by Type"
     },
     {
         CAJA_FILE_SORT_BY_MTIME,
         "modification date",
-        "Sort by Modification Date",
-        N_("by Modification _Date"),
-        N_("Keep icons sorted by modification date in rows")
+        "Sort by Modification Date"
     },
     {
         CAJA_FILE_SORT_BY_BTIME,
         "creation date",
-        "Sort by Creation Date",
-        N_("by _Creation Date"),
-        N_("Keep icons sorted by creation date in rows")
+        "Sort by Creation Date"
     },
     {
         CAJA_FILE_SORT_BY_EMBLEMS,
         "emblems",
-        "Sort by Emblems",
-        N_("by _Emblems"),
-        N_("Keep icons sorted by emblems in rows")
+        "Sort by Emblems"
     },
     {
         CAJA_FILE_SORT_BY_TRASHED_TIME,
         "trashed",
-        "Sort by Trash Time",
-        N_("by T_rash Time"),
-        N_("Keep icons sorted by trash time in rows")
+        "Sort by Trash Time"
     },
     {
         CAJA_FILE_SORT_BY_EXTENSION,
         "extension",
-        "Sort by Extension",
-        N_("by E_xtension"),
-        N_("Keep icons sorted by reversed extension segments in rows")
+        "Sort by Extension"
     }
 };
 
@@ -1694,10 +1674,16 @@ action_lock_icons_position_callback (GtkAction *action,
     FMIconView *icon_view;
     CajaFile *file;
     gboolean lock_icons_position;
+    GtkAction *action_other;
 
     icon_view = FM_ICON_VIEW (user_data);
 
     lock_icons_position = gtk_toggle_action_get_active (GTK_TOGGLE_ACTION (action));
+
+    action_other = gtk_action_group_get_action (icon_view->details->icon_action_group,
+                                                FM_ACTION_CLEAN_UP);
+    gtk_action_set_visible (action_other, !lock_icons_position);
+
 
     file = fm_directory_view_get_directory_as_file (FM_DIRECTORY_VIEW (icon_view));
     fm_icon_view_set_directory_lock_icons_position (icon_view,
