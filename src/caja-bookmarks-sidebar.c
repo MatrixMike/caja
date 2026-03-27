@@ -143,8 +143,6 @@ update_bookmarks (CajaBookmarksSidebar *sidebar)
             continue;
         }
 
-        bookmark_uri = caja_bookmark_get_uri (bookmark);
-
         root = caja_bookmark_get_location (bookmark);
         file = caja_file_get (root);
 
@@ -167,6 +165,7 @@ update_bookmarks (CajaBookmarksSidebar *sidebar)
                             -1);
 
         /* Select the bookmark if we're in the directory the bookmark points to. */
+        bookmark_uri = caja_bookmark_get_uri (bookmark);
         if (g_strcmp0 (bookmark_uri, sidebar->current_uri) == 0)
             gtk_tree_selection_select_iter (selection, &iter);
 
@@ -231,6 +230,7 @@ open_selected_item (CajaBookmarksSidebar *sidebar,
                                          flags, NULL);
 
     g_object_unref (location);
+    g_object_unref (bookmark);
 }
 
 static void
@@ -333,11 +333,14 @@ loading_uri_callback (CajaWindowInfo       *window,
                 if (strcmp (uri, location) == 0)
                 {
                     g_free (uri);
+                    g_object_unref (bookmark);
                     gtk_tree_selection_select_iter (selection, &iter);
                     break;
                 }
                 g_free (uri);
             }
+            if (bookmark)
+                g_object_unref (bookmark);
             valid = gtk_tree_model_iter_next (model, &iter);
         }
     }
@@ -368,8 +371,9 @@ is_row_selectable (GtkTreeSelection *selection,
 
     if (bookmark == NULL)
         return FALSE;
-    else
-        return TRUE;
+
+    g_object_unref (bookmark);
+    return TRUE;
 }
 
 static void
